@@ -25,8 +25,9 @@ import java.util.Random;
 
 public class FlappyBird extends ApplicationAdapter {
 
-    public static final String PREFERENCES = "FLAPPYBIRD";
-    public static final String BEST_SCORE = "BEST_SCORE";
+    private static final String PREFERENCES = "FLAPPYBIRD";
+    private static final String BEST_SCORE = "BEST_SCORE";
+    private static final int PIPE_NUM = 2;
 
     private float mVolume;
     private Preferences myPreferences;
@@ -42,14 +43,20 @@ public class FlappyBird extends ApplicationAdapter {
     private int mBestScore;
 
     private int mDisplayWidth, mDisplayHeight;
-    private int mBotPipeHeight, mUpperPipeHeight;
     private int mBirdWidth, mBirdHeight;
 
-    private boolean mIsCrossedPipe;
+    private int mPipeXSpeed, yBotPipe;
 
-    private int xPositionPipe, mPipeXSpeed, yUpPipe;
 
-    private float yInitPosition, xInitPosition, mPipeSpace;
+    private boolean[] mIsCrossedPipe;
+    private float[] mPipeSpace;
+    private int[] mBotPipeHeight, mUpperPipeHeight;
+    private int[] xPositionPipe, yUpPipe;
+
+    private Rectangle[] mBotPipeShape, mUpPipeShape;
+    private Texture[] mBottomPipe, mUpperPipe;
+
+    private float yInitPosition, xInitPosition;
     private float mSpeedX, mSpeedY;
 
     private SpriteBatch mBatch;
@@ -59,21 +66,37 @@ public class FlappyBird extends ApplicationAdapter {
 
     private int mBirdXKnockBack = 0;
     private Circle mBirdShape;
-    private Texture[] mBird;
-
-    private Rectangle mBotPipeShape, mUpPipeShape;
-    private Texture mBottomPipe, mUpperPipe;
+    private Texture[] mBird = new Texture[3];;
 
     private BitmapFont mScoreText, mRestartText, mBestScoreText;
-
 
     private Sound mWingsSound, mCollisionSound, mScoringSound;
 
 	@Override
 	public void create () {
+	    initializeArrays();
         initializeTextures();
         initializeObjects();
 	}
+
+	private void initializeArrays(){
+        int pipeNum = 2;
+
+        mIsCrossedPipe = new boolean[pipeNum];
+        mBotPipeHeight = new int[pipeNum];
+        mUpperPipeHeight = new int[pipeNum];
+
+        xPositionPipe = new int[pipeNum];
+
+        yUpPipe = new int[pipeNum];
+        mPipeSpace = new float[pipeNum];
+        mBotPipeShape = new Rectangle[pipeNum];
+        mUpPipeShape = new Rectangle[pipeNum];
+        mBottomPipe = new Texture[pipeNum];
+        mUpperPipe = new Texture[pipeNum];
+
+        mBird = new Texture[3];
+    }
 
     private void initializeTextures(){
 
@@ -85,16 +108,24 @@ public class FlappyBird extends ApplicationAdapter {
         mFlappyLogo = new Texture("flappy_bird_logo.png");
 
         mBirdShape = new Circle();
-        mBird = new Texture[3];
+
         mBird[0] = new Texture("passaro1.png");
         mBird[1] = new Texture("passaro2.png");
         mBird[2] = new Texture("passaro3.png");
 
-        mBotPipeShape = new Rectangle();
-        mBottomPipe = new Texture("cano_baixo_maior.png");
+        // INIT PIPES
 
-        mUpPipeShape = new Rectangle();
-        mUpperPipe = new Texture("cano_topo.png");
+        mBotPipeShape[0] = new Rectangle();
+        mBotPipeShape[1] = new Rectangle();
+        mBottomPipe[0] = new Texture("cano_baixo_maior.png");
+        mBottomPipe[1] = new Texture("cano_baixo.png");
+
+        mUpPipeShape[0] = new Rectangle();
+        mUpPipeShape[1] = new Rectangle();
+        mUpperPipe[0] = new Texture("cano_topo.png");
+        mUpperPipe[1] = new Texture("cano_topo_maior.png");
+
+        // INIT TEXTS
 
         mScoreText = new BitmapFont();
         mScoreText.setColor(Color.WHITE);
@@ -108,9 +139,13 @@ public class FlappyBird extends ApplicationAdapter {
         mBestScoreText.setColor(Color.RED);
         mBestScoreText.getData().setScale(3);
 
+        // INIT SOUNDS
+
         mWingsSound = Gdx.audio.newSound(Gdx.files.internal("som_asa.wav"));
         mCollisionSound = Gdx.audio.newSound(Gdx.files.internal("som_batida.wav"));
         mScoringSound = Gdx.audio.newSound(Gdx.files.internal("som_pontos.wav"));
+
+        // INIT VIEWPORT
 
         mCamera = new OrthographicCamera();
         mCamera.position.set(VIRTUAL_WIDTH/2, VIRTUAL_HEIGHT/2, 0);
@@ -126,12 +161,18 @@ public class FlappyBird extends ApplicationAdapter {
         mDisplayWidth = (int) VIRTUAL_WIDTH;
         mDisplayHeight = (int) VIRTUAL_HEIGHT;
 
-        xPositionPipe = mDisplayWidth; // DEFINES PIPES START X POSITION
-        mPipeXSpeed = 150;
-        mPipeSpace = 50;
+        xPositionPipe[0] = mDisplayWidth; // DEFINES PIPES[0] START X POSITION
+        xPositionPipe[1] = (int) (mDisplayWidth + (mDisplayWidth * 0.5)+ (mBottomPipe[0].getWidth() * 0.5)); // DEFINES PIPES[1] START X POSITION
 
-        mBotPipeHeight = (int) (mBottomPipe.getHeight() - mPipeSpace); // UPPER PIPE START HEIGHT
-        mUpperPipeHeight = (int) (mUpperPipe.getHeight() - mPipeSpace); // BOTTOM PIPE START HEIGHT
+        mPipeXSpeed = 150;
+        mPipeSpace[0] = 50;
+        mPipeSpace[1] = 50;
+
+        mBotPipeHeight[0] = (int) (mBottomPipe[0].getHeight() - mPipeSpace[0]); // UPPER PIPE[0] START HEIGHT
+        mBotPipeHeight[1] = (int) (mBottomPipe[1].getHeight() - mPipeSpace[1]); // UPPER PIPE[1] START HEIGHT
+
+        mUpperPipeHeight[0] = (int) (mUpperPipe[0].getHeight() - mPipeSpace[0]); // BOTTOM PIPE[0] START HEIGHT
+        mUpperPipeHeight[1] = (int) (mUpperPipe[1].getHeight() - mPipeSpace[1]); // BOTTOM PIPE[1] START HEIGHT
 
         mBirdWidth = 100;
         mBirdHeight = 75;
@@ -141,7 +182,10 @@ public class FlappyBird extends ApplicationAdapter {
         mSpeedX = xInitPosition; // DEFINES BIRD START X POSITION
         mSpeedY = yInitPosition; // DEFINES BIRD START Y POSITION
 
-        yUpPipe = (mDisplayHeight - mUpperPipeHeight);
+        yUpPipe[0] = (mDisplayHeight - mUpperPipeHeight[0]);
+        yUpPipe[1] = (mDisplayHeight - mUpperPipeHeight[1]);
+
+        yBotPipe = 0;
 
         mBatch = new SpriteBatch();
         mShapeRenderer = new ShapeRenderer();
@@ -202,17 +246,24 @@ public class FlappyBird extends ApplicationAdapter {
     private void resetGame() {
 
         mPipeXSpeed = 150;
-        mPipeSpace = 50;
+        mPipeSpace[0] = 50;
+        mPipeSpace[1] = 50;
 
         mBirdXKnockBack = 0;
         mGravity = 0;
         mScore = 0;
 
-        mBotPipeHeight = (int) (mBottomPipe.getHeight() - mPipeSpace); // UPPER PIPE RESET HEIGHT
-        mUpperPipeHeight = (int) (mUpperPipe.getHeight() - mPipeSpace); // BOTTOM PIPE RESET HEIGHT
-        yUpPipe = (mDisplayHeight - mUpperPipeHeight);
+        mBotPipeHeight[0] = (int) (mBottomPipe[0].getHeight() - mPipeSpace[0]); // UPPER PIPE RESET HEIGHT
+        mBotPipeHeight[1] = (int) (mBottomPipe[1].getHeight() - mPipeSpace[1]); // UPPER PIPE RESET HEIGHT
 
-        xPositionPipe = mDisplayWidth; // DEFINES PIPE RESET X POSITION
+        mUpperPipeHeight[0] = (int) (mUpperPipe[0].getHeight() - mPipeSpace[0]); // BOTTOM PIPE RESET HEIGHT
+        mUpperPipeHeight[1] = (int) (mUpperPipe[1].getHeight() - mPipeSpace[1]); // BOTTOM PIPE RESET HEIGHT
+
+        yUpPipe[0] = (mDisplayHeight - mUpperPipeHeight[0]);
+        yUpPipe[1] = (mDisplayHeight - mUpperPipeHeight[1]);
+
+        xPositionPipe[0] = mDisplayWidth; // DEFINES PIPE RESET X POSITION
+        xPositionPipe[1] = (int) (mDisplayWidth + (mDisplayWidth * 0.5) + (mBottomPipe[0].getWidth() * 0.5)); // DEFINES PIPE RESET X POSITION
 
         mSpeedX = xInitPosition; // DEFINES BIRD RESET X POSITION
         mSpeedY = yInitPosition; // DEFINES BIRD RESET Y POSITION
@@ -224,8 +275,11 @@ public class FlappyBird extends ApplicationAdapter {
 
     private boolean controlCollision() {
 
-        mBotPipeShape.set(xPositionPipe, 0, mBottomPipe.getWidth(), mBotPipeHeight);
-        mUpPipeShape.set(xPositionPipe, yUpPipe, mUpperPipe.getWidth(), mUpperPipeHeight);
+        mBotPipeShape[0].set(xPositionPipe[0], yBotPipe, mBottomPipe[0].getWidth(), mBotPipeHeight[0]);
+        mBotPipeShape[1].set(xPositionPipe[1], yBotPipe, mBottomPipe[1].getWidth(), mBotPipeHeight[1]);
+
+        mUpPipeShape[0].set(xPositionPipe[0], yUpPipe[0], mUpperPipe[0].getWidth(), mUpperPipeHeight[0]);
+        mUpPipeShape[1].set(xPositionPipe[1], yUpPipe[1], mUpperPipe[1].getWidth(), mUpperPipeHeight[1]);
 
         float birdRadius = (float) (mBirdHeight*0.5);
         float birdX = mSpeedX + (float) (mBirdWidth * 0.5);
@@ -233,8 +287,14 @@ public class FlappyBird extends ApplicationAdapter {
 
         mBirdShape.set(birdX, birdY, birdRadius);
 
-        boolean collidingUp = Intersector.overlaps(mBirdShape, mUpPipeShape);
-        boolean collidingDown = Intersector.overlaps(mBirdShape, mBotPipeShape);
+        boolean collidingUp1 = Intersector.overlaps(mBirdShape, mUpPipeShape[0]);
+        boolean collidingUp2 = Intersector.overlaps(mBirdShape, mUpPipeShape[1]);
+
+        boolean collidingDown1 = Intersector.overlaps(mBirdShape, mBotPipeShape[0]);
+        boolean collidingDown2 = Intersector.overlaps(mBirdShape, mBotPipeShape[1]);
+
+        boolean collidingDown = collidingDown1 || collidingDown2;
+        boolean collidingUp = collidingUp1 || collidingUp2;
 
         boolean birdFell = mSpeedY == 0;
 
@@ -269,8 +329,8 @@ public class FlappyBird extends ApplicationAdapter {
         // UPDATE VALUES
 
         // UPDATE SCORE
-        if (!mIsCrossedPipe) {
-            if (mSpeedX > xPositionPipe ) {
+        if (!mIsCrossedPipe[0]) {
+            if (mSpeedX > xPositionPipe[0] ) {
                 mScoringSound.play(mVolume);
                 mScore++;
 
@@ -278,30 +338,64 @@ public class FlappyBird extends ApplicationAdapter {
                     mBestScore = mScore;
                     myPreferences.putInteger(BEST_SCORE, mBestScore);
                 }
-
-                mIsCrossedPipe = true;
+                mIsCrossedPipe[0] = true;
             }
         }
 
+
+        if (!mIsCrossedPipe[1]) {
+            if (mSpeedX > xPositionPipe[1] ) {
+                mScoringSound.play(mVolume);
+                mScore++;
+
+                if (mScore > mBestScore){
+                    mBestScore = mScore;
+                    myPreferences.putInteger(BEST_SCORE, mBestScore);
+                }
+                mIsCrossedPipe[1] = true;
+            }
+        }
+
+
         //PIPE MOVEMENT
-        if (xPositionPipe < (0-mBottomPipe.getWidth())){
-            xPositionPipe = mDisplayWidth;
-            mPipeXSpeed++;
+        if (xPositionPipe[0] < (0-mBottomPipe[0].getWidth())){
+            xPositionPipe[0] = (int) (mDisplayWidth + (mBottomPipe[0].getWidth() * 0.5) );//+ (mDisplayWidth * 0.2)
 
             int diff = myRandy();
-            mBotPipeHeight = (int) (mBottomPipe.getHeight() - diff - mPipeSpace);
-            mUpperPipeHeight = (int) (mUpperPipe.getHeight() + diff - mPipeSpace);
+            mBotPipeHeight[0] = (int) (mBottomPipe[0].getHeight() - diff - mPipeSpace[0]);
+            mUpperPipeHeight[0] = (int) (mUpperPipe[0].getHeight() + diff - mPipeSpace[0]);
 
-            yUpPipe = (mDisplayHeight - mUpperPipeHeight);
+            yUpPipe[0] = (mDisplayHeight - mUpperPipeHeight[0]);
 
             // PIPE SPACE
-            if (mIsCrossedPipe) {
-                if (mPipeSpace >= 0) mPipeSpace -= 0.5;
-                mIsCrossedPipe = false;
+            if (mIsCrossedPipe[0]) {
+                if (mPipeSpace[0] >= 0) mPipeSpace[0] -= 0.5;
+                mIsCrossedPipe[0] = false;
             }
 
         } else
-            xPositionPipe -= (Gdx.graphics.getDeltaTime()*mPipeXSpeed);
+            xPositionPipe[0] -= (Gdx.graphics.getDeltaTime()*mPipeXSpeed);
+
+
+        if (xPositionPipe[1] < (0-mBottomPipe[1].getWidth())){
+            xPositionPipe[1] = (int) (mDisplayWidth + (mBottomPipe[0].getWidth() * 0.5));//+ (mDisplayWidth * 0.2)
+            mPipeXSpeed++;
+
+            int diff = myRandy();
+            mBotPipeHeight[1] = (int) (mBottomPipe[1].getHeight() - diff - mPipeSpace[1]);
+            mUpperPipeHeight[1] = (int) (mUpperPipe[1].getHeight() + diff - mPipeSpace[1]);
+
+            yUpPipe[1] = (mDisplayHeight - mUpperPipeHeight[1]);
+
+            // PIPE SPACE
+            if (mIsCrossedPipe[1]) {
+                if (mPipeSpace[1] >= 0) mPipeSpace[1] -= 0.5;
+                mIsCrossedPipe[1] = false;
+            }
+
+        } else
+            xPositionPipe[1] -= (Gdx.graphics.getDeltaTime()*mPipeXSpeed);
+
 
         // BIRD SPEED
         mGravity += 1.5;
@@ -320,10 +414,12 @@ public class FlappyBird extends ApplicationAdapter {
         // #################################   DRAWING PIPES   ####################################
 
         // BOTTOM PIPE
-        mBatch.draw(mBottomPipe, xPositionPipe, 0, mBottomPipe.getWidth(), mBotPipeHeight);
+        mBatch.draw(mBottomPipe[0], xPositionPipe[0], yBotPipe, mBottomPipe[0].getWidth(), mBotPipeHeight[0]);
+        mBatch.draw(mBottomPipe[1], xPositionPipe[1], yBotPipe, mBottomPipe[1].getWidth(), mBotPipeHeight[1]);
 
         //UPPER PIPE
-        mBatch.draw(mUpperPipe, xPositionPipe, yUpPipe, mUpperPipe.getWidth(), mUpperPipeHeight);
+        mBatch.draw(mUpperPipe[0], xPositionPipe[0], yUpPipe[0], mUpperPipe[0].getWidth(), mUpperPipeHeight[0]);
+        mBatch.draw(mUpperPipe[1], xPositionPipe[1], yUpPipe[1], mUpperPipe[1].getWidth(), mUpperPipeHeight[1]);
 
         // ###################################   DRAWING BIRD   ###################################
 
