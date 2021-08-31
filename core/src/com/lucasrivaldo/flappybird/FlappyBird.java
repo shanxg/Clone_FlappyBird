@@ -68,7 +68,7 @@ public class FlappyBird extends ApplicationAdapter {
     private Circle mBirdShape;
     private Texture[] mBird = new Texture[3];;
 
-    private BitmapFont mScoreText, mRestartText, mBestScoreText;
+    private BitmapFont mScoreText, mRestartText, mBestScoreText, mySignature;
 
     private Sound mWingsSound, mCollisionSound, mScoringSound;
 
@@ -138,6 +138,11 @@ public class FlappyBird extends ApplicationAdapter {
         mBestScoreText = new BitmapFont();
         mBestScoreText.setColor(Color.RED);
         mBestScoreText.getData().setScale(3);
+
+
+        mySignature = new BitmapFont();
+        mySignature.setColor(Color.BLACK);
+        mySignature.getData().setScale(3);
 
         // INIT SOUNDS
 
@@ -378,7 +383,7 @@ public class FlappyBird extends ApplicationAdapter {
 
 
         if (xPositionPipe[1] < (0-mBottomPipe[1].getWidth())){
-            xPositionPipe[1] = (int) (mDisplayWidth + (mBottomPipe[0].getWidth() * 0.5));//+ (mDisplayWidth * 0.2)
+            xPositionPipe[1] = (int) (mDisplayWidth );//+ (mDisplayWidth * 0.2)
             mPipeXSpeed++;
 
             int diff = myRandy();
@@ -465,6 +470,11 @@ public class FlappyBird extends ApplicationAdapter {
                     "Touch to start",
                     (float) ((mDisplayWidth * 0.5) - 140 ),
                     (float) ((mDisplayHeight * 0.65)) );
+
+            mySignature.draw(mBatch,
+                    "Copy created by Lucas Rivaldo",
+                    (float) ((mDisplayWidth * 0.5) - 290 ),
+                    (float) ((mDisplayHeight * 0.1)) );
         }
     }
 
@@ -489,18 +499,4 @@ public class FlappyBird extends ApplicationAdapter {
         i = ((i % 2) == 0) ? i : i * (-1);
         return i;
     }
-
-     /*
-                mShapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-                mShapeRenderer.setColor(Color.BLUE);
-
-                mShapeRenderer.rect(
-                        (float) ((mDisplayWidth * 0.5) - (mRestartText.getSpaceXadvance() * 0.5)),//(mGameOver.getWidth() * 0.4));
-                        (float) ((mDisplayHeight * 0.78)  - mBestScoreText.getLineHeight() ),
-                        mBestScoreText.getRegions().get(0).;
-                        mBestScoreText.getRegion().getRegionY());
-
-                mShapeRenderer.end();
-
-*/
 }
