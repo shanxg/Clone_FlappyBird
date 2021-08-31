@@ -27,7 +27,7 @@ public class FlappyBird extends ApplicationAdapter {
 
     private static final String PREFERENCES = "FLAPPYBIRD";
     private static final String BEST_SCORE = "BEST_SCORE";
-    private static final int PIPE_NUM = 2;
+
 
     private float mVolume;
     private Preferences myPreferences;
@@ -60,7 +60,7 @@ public class FlappyBird extends ApplicationAdapter {
     private float mSpeedX, mSpeedY;
 
     private SpriteBatch mBatch;
-    private ShapeRenderer mShapeRenderer;
+    //private ShapeRenderer mShapeRenderer;
 
     private Texture mBackground, mGameOver, mFlappyLogo;
 
@@ -83,6 +83,9 @@ public class FlappyBird extends ApplicationAdapter {
         int pipeNum = 2;
 
         mIsCrossedPipe = new boolean[pipeNum];
+        mIsCrossedPipe[0] = false;
+        mIsCrossedPipe[1] = false;
+
         mBotPipeHeight = new int[pipeNum];
         mUpperPipeHeight = new int[pipeNum];
 
@@ -167,7 +170,7 @@ public class FlappyBird extends ApplicationAdapter {
         mDisplayHeight = (int) VIRTUAL_HEIGHT;
 
         xPositionPipe[0] = mDisplayWidth; // DEFINES PIPES[0] START X POSITION
-        xPositionPipe[1] = (int) (mDisplayWidth + (mDisplayWidth * 0.5)+ (mBottomPipe[0].getWidth() * 0.5)); // DEFINES PIPES[1] START X POSITION
+        xPositionPipe[1] = (int) (mDisplayWidth + (mDisplayWidth * 0.5) + mBottomPipe[0].getWidth()); // DEFINES PIPES[1] START X POSITION
 
         mPipeXSpeed = 150;
         mPipeSpace[0] = 50;
@@ -193,7 +196,7 @@ public class FlappyBird extends ApplicationAdapter {
         yBotPipe = 0;
 
         mBatch = new SpriteBatch();
-        mShapeRenderer = new ShapeRenderer();
+        //mShapeRenderer = new ShapeRenderer();
     }
 
     @Override
@@ -268,7 +271,7 @@ public class FlappyBird extends ApplicationAdapter {
         yUpPipe[1] = (mDisplayHeight - mUpperPipeHeight[1]);
 
         xPositionPipe[0] = mDisplayWidth; // DEFINES PIPE RESET X POSITION
-        xPositionPipe[1] = (int) (mDisplayWidth + (mDisplayWidth * 0.5) + (mBottomPipe[0].getWidth() * 0.5)); // DEFINES PIPE RESET X POSITION
+        xPositionPipe[1] = (int) (mDisplayWidth + (mDisplayWidth * 0.5) + mBottomPipe[0].getWidth()); // DEFINES PIPE RESET X POSITION
 
         mSpeedX = xInitPosition; // DEFINES BIRD RESET X POSITION
         mSpeedY = yInitPosition; // DEFINES BIRD RESET Y POSITION
@@ -363,8 +366,10 @@ public class FlappyBird extends ApplicationAdapter {
 
 
         //PIPE MOVEMENT
-        if (xPositionPipe[0] < (0-mBottomPipe[0].getWidth())){
-            xPositionPipe[0] = (int) (mDisplayWidth + (mBottomPipe[0].getWidth() * 0.5) );//+ (mDisplayWidth * 0.2)
+        float pipeSpeed = Gdx.graphics.getDeltaTime();
+        // PIPE 1
+        if (xPositionPipe[0] < (0 - mBottomPipe[0].getWidth())){
+            xPositionPipe[0] = (mDisplayWidth + mBottomPipe[1].getWidth());
 
             int diff = myRandy();
             mBotPipeHeight[0] = (int) (mBottomPipe[0].getHeight() - diff - mPipeSpace[0]);
@@ -379,12 +384,12 @@ public class FlappyBird extends ApplicationAdapter {
             }
 
         } else
-            xPositionPipe[0] -= (Gdx.graphics.getDeltaTime()*mPipeXSpeed);
+            xPositionPipe[0] -= (pipeSpeed*mPipeXSpeed);
 
 
-        if (xPositionPipe[1] < (0-mBottomPipe[1].getWidth())){
-            xPositionPipe[1] = (int) (mDisplayWidth );//+ (mDisplayWidth * 0.2)
-            mPipeXSpeed++;
+        // PIPE 2
+        if (xPositionPipe[1] < (0 - mBottomPipe[1].getWidth())){
+            xPositionPipe[1] = (mDisplayWidth + mBottomPipe[0].getWidth());
 
             int diff = myRandy();
             mBotPipeHeight[1] = (int) (mBottomPipe[1].getHeight() - diff - mPipeSpace[1]);
@@ -398,8 +403,9 @@ public class FlappyBird extends ApplicationAdapter {
                 mIsCrossedPipe[1] = false;
             }
 
+            mPipeXSpeed++;
         } else
-            xPositionPipe[1] -= (Gdx.graphics.getDeltaTime()*mPipeXSpeed);
+            xPositionPipe[1] -= (pipeSpeed*mPipeXSpeed);
 
 
         // BIRD SPEED
@@ -472,7 +478,7 @@ public class FlappyBird extends ApplicationAdapter {
                     (float) ((mDisplayHeight * 0.65)) );
 
             mySignature.draw(mBatch,
-                    "Copy created by Lucas Rivaldo",
+                    "Copy developed by Lucas Rivaldo",
                     (float) ((mDisplayWidth * 0.5) - 290 ),
                     (float) ((mDisplayHeight * 0.1)) );
         }
@@ -494,7 +500,7 @@ public class FlappyBird extends ApplicationAdapter {
     private int myRandy(){
         Random randy = new Random();
 
-        int maxHeightDiff = (mDisplayHeight/3) - 50;
+        int maxHeightDiff = (mDisplayHeight/4) - 50;
         int i = randy.nextInt(maxHeightDiff);
         i = ((i % 2) == 0) ? i : i * (-1);
         return i;
