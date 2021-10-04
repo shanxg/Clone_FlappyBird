@@ -1,7 +1,7 @@
 # <div align="center"> FlappyBird App </div>
 <br />
   
-> ### My 5th App project
+> ### 5th App project
 > 
 >> <br />
 >> 
